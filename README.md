@@ -1,6 +1,8 @@
-# 🎨 CAS Art Heist - Advanced Art Theft System for RedM
+# 🐺 LXR Art Heist — Advanced Art Theft System for RedM
 
-A comprehensive art theft system for Red Dead Redemption 2 (RedM) servers featuring interactive NPC dealers, realistic theft mechanics, and a modern React-based UI.
+> **wolves.land** — The Land of Wolves 🐺 | Georgian RP 🇬🇪
+
+A comprehensive art theft system for Red Dead Redemption 2 (RedM) servers featuring interactive NPC dealers, realistic theft mechanics, wagon transport, and a modern React-based UI. Built for **LXR-Core**, **RSG-Core**, and **VORP Core** with automatic framework detection.
 
 ## 📋 Table of Contents
 - [Features](#-features)
@@ -16,62 +18,69 @@ A comprehensive art theft system for Red Dead Redemption 2 (RedM) servers featur
 ## ✨ Features
 
 ### 🎯 Core Features
-- **Interactive Art Theft System**: Steal valuable statues and paintings from various locations
-- **Realistic Theft Mechanics**: Use lockpicks to steal art pieces with chance-based success/failure
-- **Dynamic Damage System**: Art pieces can be damaged during theft, affecting their value
-- **Multiple Art Types**: Support for statues, busts, and paintings with different values
-- **NPC Art Dealers**: Interactive dealers who inspect and purchase stolen art
+- **Interactive Art Theft System** — Steal valuable statues and paintings from various locations
+- **Realistic Theft Mechanics** — Use lockpicks to steal art pieces with chance-based success/failure
+- **Dynamic Damage System** — Art pieces can be damaged during theft, affecting their value
+- **Multiple Art Types** — Support for statues, busts, and paintings with different values
+- **NPC Art Dealers** — Interactive dealers who inspect and purchase stolen art
+- **Server-side Validation** — Price caps and anti-exploit checks on all transactions
 
 ### 🎨 Advanced UI
-- **Modern React Interface**: Beautiful, responsive UI built with React and Tailwind CSS
-- **Animated Interactions**: Smooth animations and transitions using Framer Motion
-- **Typewriter Effect**: Dynamic text display for NPC dialogues
-- **Multi-language Support**: Easy localization system
+- **Modern React Interface** — Beautiful, responsive UI built with React and Tailwind CSS
+- **Animated Interactions** — Smooth animations and transitions using Framer Motion
+- **Typewriter Effect** — Dynamic text display for NPC dialogues
+- **Multi-language Support** — English and Georgian out of the box
 
 ### 💰 Economic Features
-- **Dynamic Pricing**: Art values fluctuate based on condition and dealer preferences
-- **Scam System**: Some dealers may scam players with fake offers
-- **Durability System**: Art condition affects final selling price
-- **Multiple Dealers**: Different dealers with varying price ranges and reliability
+- **Dynamic Pricing** — Art values fluctuate based on condition and dealer preferences
+- **Scam System** — Some dealers may scam players with fake offers
+- **Durability System** — Art condition affects final selling price
+- **Multiple Dealers** — Different dealers with varying price ranges and reliability
+- **Discord Webhook Logging** — All transactions logged for admin review
 
 ### 🚛 Transportation System
-- **Wagon Loading**: Load stolen art onto wagons for transport
-- **Realistic Physics**: Art pieces fall and can break when dropped
-- **Inventory Management**: Proper handling of stolen goods
+- **Wagon Loading** — Load stolen art onto wagons for transport
+- **Realistic Physics** — Art pieces fall and can break when dropped
+- **Inventory Management** — Proper handling of stolen goods
 
 ## 🔧 Requirements
 
-### Framework Support
-- **VORP Core** or **RSG Core**
-- **VORP Inventory** or **RSG Inventory**
+### Framework Support (auto-detected)
+- **LXR-Core** (Primary)
+- **RSG-Core** (Supported)
+- **VORP Core** (Supported)
+
+### Inventory Support (auto-detected)
+- **lxr-inventory** / **rsg-inventory** / **vorp_inventory**
 
 ### Dependencies
-- `cas_fwlibs` - Framework library functions
-- `cas-progressbar` - Progress bar system
-- `cas-notification` (optional) - Notification system
-- `oxmysql` - Database operations
+- `ox_lib` — Notifications and progress bars (recommended)
+- `oxmysql` — Database operations
 
 ### Optional Dependencies
-- Custom notification system (configurable)
+- `cas-progressbar` — Legacy progress bar (set `Config.ProgressBarProvider = 'cas-progressbar'`)
 
 ## 📦 Installation
 
 1. **Download the Script**
    ```bash
-   git clone https://github.com/codeaftersex/cas-artheist.git
+   git clone https://github.com/iboss21/lxr-artheist.git
    ```
 
 2. **Place in Resources**
-   - Copy the `cas-artheist` folder to your server's `resources` directory
+   - Copy the `lxr-artheist` folder to your server's `resources` directory
+   - ⚠️ The folder **must** be named `lxr-artheist` — a runtime check enforces this
 
 3. **Add to server.cfg**
    ```cfg
-   ensure cas-artheist
+   ensure ox_lib
+   ensure oxmysql
+   ensure lxr-artheist
    ```
 
 4. **Configure Dependencies**
-   - Ensure all required dependencies are installed and running
-   - Configure your framework (VORP/RSG) properly
+   - Ensure your framework (LXR-Core / RSG-Core / VORP) is installed and running
+   - Ensure your inventory resource is started before this resource
 
 5. **Database Setup**
    - No additional database tables required
@@ -79,7 +88,7 @@ A comprehensive art theft system for Red Dead Redemption 2 (RedM) servers featur
 
 6. **Restart Server**
    ```bash
-   restart cas-artheist
+   restart lxr-artheist
    ```
 
 ## ⚙️ Configuration
@@ -87,35 +96,45 @@ A comprehensive art theft system for Red Dead Redemption 2 (RedM) servers featur
 ### Main Configuration (`config/shared_config.lua`)
 
 ```lua
-Config.Locale = "en" -- Language setting
+Config.Framework = 'auto'              -- 'auto' or manual: 'lxr-core', 'rsg-core', 'vorp_core'
+Config.Locale = "en"                   -- 'en' or 'ge' (Georgian)
+Config.NotificationProvider = 'ox_lib' -- 'ox_lib', 'vorp', or 'print'
+Config.ProgressBarProvider  = 'ox_lib' -- 'ox_lib' or 'cas-progressbar'
+
+-- Discord webhook for transaction logging
+Config.LogWebhook    = "put your webhook"
+Config.WebhookHeader = "Art Heist | 🐺 wolves.land"
 
 -- Art pieces that can be stolen
 Config.ArtHeistProps = {
     "p_gen_statue02b",        -- Large statue
-    "p_cherubstatuenbx01x",   -- Cherub statue  
+    "p_cherubstatuenbx01x",   -- Cherub statue
     "p_headbust03x"           -- Head bust
 }
 
+-- Wagon model for art transport
+Config.WagonModel = "wagonCircus01x"
+
 -- Theft mechanics
-Config.CutHandsChance = 0.9           -- Chance to cut hands during theft
-Config.CutHandsDamage = 10            -- Damage taken when cutting hands
-Config.DeleteLockPickChance = 0.9     -- Chance lockpick breaks
-Config.StatueDamage = math.random(1, 100) -- Random damage to stolen art
-Config.StealProgBarDuration = math.random(15000, 30000) -- Theft duration
+Config.CutHandsChance       = 0.9                       -- Chance to cut hands during theft
+Config.CutHandsDamage        = 10                        -- Damage taken when cutting hands
+Config.DeleteLockPickChance  = 0.9                       -- Chance lockpick breaks
+Config.StatueDamage          = math.random(1, 100)       -- Random damage to stolen art
+Config.StealProgBarDuration  = math.random(15000, 30000) -- Theft duration (ms)
 
 -- Delivery locations with NPC dealers
 Config.DeliveryLocations = {
     [1] = {
-        name = "Saint Denis Dealer",
-        coords = {x = 2705.594, y = -1105.877, z = 48.415, h = 219.542},
-        pedModel = "mp_de_u_m_m_aurorabasin_01",
-        pedName = "Aurora Basin",
-        isScam = true,        -- This dealer might scam players
-        scamChance = 0.9,     -- 90% chance to scam
+        name      = "Saint Denis Dealer",
+        coords    = {x = 2705.594, y = -1105.877, z = 48.415, h = 219.542},
+        pedModel  = "mp_de_u_m_m_aurorabasin_01",
+        pedName   = "Aurora Basin",
+        isScam    = true,
+        scamChance = 0.9,
         offers = {
-            ["p_gen_statue02b"] = { minPrice = 1200, maxPrice = 4800 },
-            ["p_cherubstatuenbx01x"] = { minPrice = 800, maxPrice = 2500 },
-            ["p_headbust03x"] = { minPrice = 500, maxPrice = 1300 },
+            ["p_gen_statue02b"]      = { minPrice = 1200, maxPrice = 4800 },
+            ["p_cherubstatuenbx01x"] = { minPrice = 800,  maxPrice = 2500 },
+            ["p_headbust03x"]        = { minPrice = 500,  maxPrice = 1300 },
         }
     },
 }
@@ -148,7 +167,7 @@ Config.PropsLocationOnHands = {
 
 3. **Steal Art**
    - Use lockpicks to steal art pieces
-   - Be careful - you might cut your hands or break the lockpick
+   - Be careful — you might cut your hands or break the lockpick
    - Art may be damaged during theft, reducing value
 
 4. **Transport Art**
@@ -169,7 +188,7 @@ Config.PropsLocationOnHands = {
 3. Complete the progress bar
 4. Art piece falls and may take damage
 5. Pick up the art piece
-6. Transport to dealers for sale
+6. Transport to a dealer via wagon for sale
 
 ## 🎯 Commands
 
@@ -189,22 +208,22 @@ Config.PropsLocationOnHands = {
 
 ## 🌍 Localization
 
-The script supports multiple languages. Edit `config/locale.lua` to add translations:
+The script supports multiple languages. Edit `config/locale.lua` to add or modify translations:
 
 ```lua
 Locales = {
     ["en"] = {
-        ["getOffer"] = "Get Offer For",
-        ["steal"] = "Stealing...",
-        ["pickup"] = "Pickup",
-        ["putDown"] = "Put Down",
-        ["cutyourhand"] = "You cut your hands.",
-        ["statueDamaged"] = "The statue was damaged, its value decreased.",
-        ["missingitem"] = "You are missing the lockpick",
-        -- Add more translations
+        ["getOffer"]         = "Get Offer For",
+        ["steal"]            = "Stealing...",
+        ["pickup"]           = "Pickup",
+        ["putDown"]          = "Put Down",
+        ["cutyourhand"]      = "You cut your hands.",
+        ["statueDamaged"]    = "The statue was damaged, its value decreased.",
+        ["missingitem"]      = "You are missing the lockpick",
+        -- ... more keys
     },
-    ["tr"] = {
-        -- Turkish translations
+    ["ge"] = {
+        -- Georgian translations included out of the box
     }
 }
 ```
@@ -214,17 +233,17 @@ Locales = {
 ### Adding New Art Pieces
 1. Add the prop name to `Config.ArtHeistProps`
 2. Configure hand positioning in `Config.PropsLocationOnHands`
-3. Add pricing to dealer offers
-4. Add UI images if needed
+3. Add pricing to each dealer's `offers` table
+4. Add a UI background image in `web/src/components/App.tsx` → `StatueOfferImages`
 
 ### Adding New Dealers
 ```lua
 [2] = {
-    name = "Valentine Dealer",
-    coords = {x = -175.0, y = 627.0, z = 114.0, h = 180.0},
-    pedModel = "a_m_m_unidustrial_01",
-    pedName = "John Smith",
-    isScam = false,
+    name      = "Valentine Dealer",
+    coords    = {x = -175.0, y = 627.0, z = 114.0, h = 180.0},
+    pedModel  = "a_m_m_unidustrial_01",
+    pedName   = "John Smith",
+    isScam    = false,
     scamChance = 0.0,
     offers = {
         ["p_gen_statue02b"] = { minPrice = 2000, maxPrice = 5000 },
@@ -241,9 +260,9 @@ Locales = {
 
 The React-based UI can be customized by editing files in the `web/src` directory:
 
-- `components/App.tsx` - Main UI component
-- `index.css` - Styling and animations
-- `assets/` - UI images and fonts
+- `components/App.tsx` — Main UI component
+- `index.css` — Styling and animations
+- `assets/` — UI images and fonts
 
 ## 🐛 Troubleshooting
 
@@ -254,11 +273,11 @@ The React-based UI can be customized by editing files in the `web/src` directory
 - Verify server has proper prop streaming
 
 **Lockpicks not working:**
-- Ensure `cas_fwlibs` is properly installed
-- Check inventory system compatibility
+- Ensure your inventory resource is running
+- Check that `Config.RequiredItem` matches your item name
 
 **UI not showing:**
-- Verify React build is up to date
+- Verify React build is up to date (`cd web && npm run build`)
 - Check browser console for errors
 - Ensure NUI callbacks are registered
 
@@ -266,6 +285,9 @@ The React-based UI can be customized by editing files in the `web/src` directory
 - Check NPC spawn coordinates
 - Verify ped models exist in game
 - Ensure proper framework integration
+
+**Resource won't start:**
+- The folder **must** be named `lxr-artheist` — a runtime check enforces this
 
 ### Debug Mode
 Enable debug mode in config:
@@ -275,9 +297,10 @@ Config.Debug = true
 
 ## 📞 Support
 
-- **GitHub Issues**: [Report bugs and request features](https://github.com/codeaftersex/cas-artheist/issues)
-- **Discord**: Join our community server for support
-- **Documentation**: Check the wiki for detailed guides
+- **GitHub Issues**: [Report bugs and request features](https://github.com/iboss21/lxr-artheist/issues)
+- **Discord**: [Join the community](https://discord.gg/CrKcWdfd3A)
+- **Website**: [wolves.land](https://www.wolves.land)
+- **Store**: [The Lux Empire Tebex](https://theluxempire.tebex.io)
 
 ## 🤝 Contributing
 
@@ -289,22 +312,21 @@ Config.Debug = true
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Credits
 
-- **Developer**: Code After Sex Team
-- **Framework**: Built for RedM/VORP/RSG
+- **Developer**: iBoss21 / The Lux Empire
+- **Server**: The Land of Wolves 🐺 — Georgian RP
+- **Framework**: Built for RedM / LXR-Core / RSG-Core / VORP Core
 - **UI**: React + Tailwind CSS + Framer Motion
 - **Special Thanks**: RedM community for testing and feedback
 
 ---
 
-**Download**: [GitHub Repository](https://github.com/codeaftersex/cas-artheist)
-
-**Version**: 1.0.0  
-**Last Updated**: 2024
+**Version**: 1.0.0
+**Last Updated**: 2026
 
 ---
 
-*Transform your RedM server with this immersive art theft experience! Perfect for roleplay servers looking to add unique criminal activities.*
+*Transform your RedM server with this immersive art theft experience! Perfect for roleplay servers looking to add unique criminal activities.* 🐺

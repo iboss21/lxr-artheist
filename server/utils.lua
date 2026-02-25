@@ -800,6 +800,52 @@ function NotifyPlayer(source, message)
     end
 end
 
+-- ████████████████████████████████████████████████████████████████████████████████
+-- ████████████████████████ DISCORD WEBHOOK LOGGING ████████████████████████████████
+-- ████████████████████████████████████████████████████████████████████████████████
+
+---@param source number The players server id
+---@param price number The price paid
+---@param locationIndex number|nil The delivery location index
+---@param durability number|nil The art durability at time of sale
+function SendArtHeistLog(source, price, locationIndex, durability)
+    local webhook = Config.LogWebhook
+    if not webhook or webhook == "" or webhook == "put your webhook" then return end
+
+    local playerName = GetPlayerName(source) or "Unknown"
+    local charName = "N/A"
+    if initialized then
+        local ok, name = pcall(GetPlayerNameBySource, source)
+        if ok and name then charName = name end
+    end
+
+    local locName = "Unknown"
+    if locationIndex and Config.DeliveryLocations[locationIndex] then
+        locName = Config.DeliveryLocations[locationIndex].name or locName
+    end
+
+    local embed = {
+        {
+            title = Config.WebhookHeader or "Art Heist Log",
+            color = 15386437, -- gold
+            fields = {
+                { name = "Player",     value = playerName .. " (ID: " .. source .. ")", inline = true },
+                { name = "Character",  value = charName,                                inline = true },
+                { name = "Price",      value = "$" .. tostring(price),                  inline = true },
+                { name = "Dealer",     value = locName,                                 inline = true },
+                { name = "Durability", value = tostring(durability or "N/A") .. "%",    inline = true },
+            },
+            footer = { text = "🐺 wolves.land — Art Heist System" },
+            timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
+        }
+    }
+
+    PerformHttpRequest(webhook, function(err, text, headers) end, "POST", json.encode({
+        username = "Art Heist Logger",
+        embeds = embed,
+    }), { ["Content-Type"] = "application/json" })
+end
+
 Citizen.CreateThread(function()
     InitalFunc()
 end)
