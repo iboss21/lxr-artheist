@@ -1,7 +1,7 @@
 fx_version "cerulean"
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
-description "React JS PAUSEMENU UI made by Code After S*x"
-author "Code After Sex"
+description "🐺 LXR Art Heist System | wolves.land — The Land of Wolves"
+author "iBoss21 / The Lux Empire"
 version '1.0.0'
 
 lua54 'yes'

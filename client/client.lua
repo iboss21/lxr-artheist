@@ -1,3 +1,19 @@
+--[[
+    ██╗     ██╗  ██╗██████╗        ██████╗ ██████╗ ██████╗ ███████╗
+    ██║     ╚██╗██╔╝██╔══██╗      ██╔════╝██╔═══██╗██╔══██╗██╔════╝
+    ██║      ╚███╔╝ ██████╔╝█████╗██║     ██║   ██║██████╔╝█████╗  
+    ██║      ██╔██╗ ██╔══██╗╚════╝██║     ██║   ██║██╔══██╗██╔══╝  
+    ███████╗██╔╝ ██╗██║  ██║      ╚██████╗╚██████╔╝██║  ██║███████╗
+    ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝       ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
+
+    🐺 LXR Core - Art Heist System | CLIENT
+    © 2026 iBoss21 / The Lux Empire | wolves.land
+]]
+
+-- ████████████████████████████████████████████████████████████████████████████████
+-- ████████████████████████ CLIENT LOGIC ██████████████████████████████████████████
+-- ████████████████████████████████████████████████████████████████████████████████
+
 local attachedProp = nil
 local lockpickProp = nil
 local ActiveHeistObj = nil
@@ -9,25 +25,6 @@ local OpenShopPrompt = nil
 local ShopGroup = GetRandomIntInRange(0, 0xffffff)
 local PutDownPrompt = nil
 local PutDownGroup = GetRandomIntInRange(0, 0xffffff)
-CAS = nil
-
-CreateThread(function()
-    local retries = 50
-    while CAS == nil and retries > 0 do
-        local success, result = pcall(function()
-            return exports["cas_fwlibs"]:MBLFunctions()
-        end)
-        if success and result then
-            CAS = result
-            break
-        end
-        retries = retries - 1
-        Wait(100)
-    end
-    if CAS == nil then
-        print("[CAS ERROR] cas_fwlibs export cannot be fetched.")
-    end
-end)
 
 local function openNuiFrame(pedName)
     if not SendReactMessage then return end
@@ -111,7 +108,7 @@ end
 
 
 local function HasLockpick()
-    local callb = TriggerCallback("cas:server:HasLockpick?")
+    local callb = TriggerCallback("lxr-artheist:server:HasLockpick?")
     if callb then
         return true
     else
@@ -391,11 +388,31 @@ CreateThread(function()
                         -90.0, 0.0, 0.0, 
                         true, true, false, true, 1, true
                     )
-                    exports['cas-progressbar']:Progress({
-                        name = "art_heist",
-                        duration = Config.StealProgBarDuration,
-                        label = _L("steal"),
-                    }, function(cancelled)
+                    local function runProgressBar(onComplete)
+                        local provider = Config.ProgressBarProvider or 'ox_lib'
+                        if provider == 'ox_lib' then
+                            exports.ox_lib:progressBar({
+                                duration = Config.StealProgBarDuration,
+                                label = _L("steal"),
+                                useWhileDead = false,
+                                canCancel = true,
+                                disable = { move = false, car = true, combat = true },
+                                anim = { dict = "script_ca@carust@02@ig@ig1_rustlerslockpickingconv01", clip = "convo_lockpick_smhthug_01", flag = 1 }
+                            }, function(cancelled)
+                                onComplete(cancelled)
+                            end)
+                        else
+                            exports['cas-progressbar']:Progress({
+                                name = "art_heist",
+                                duration = Config.StealProgBarDuration,
+                                label = _L("steal"),
+                            }, function(cancelled)
+                                onComplete(cancelled)
+                            end)
+                        end
+                    end
+
+                    runProgressBar(function(cancelled)
                         ClearPedTasks(ped)
                         if lockpickProp and DoesEntityExist(lockpickProp) then
                             DeleteEntity(lockpickProp)

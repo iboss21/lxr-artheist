@@ -1,9 +1,25 @@
+--[[
+    ██╗     ██╗  ██╗██████╗        ██████╗ ██████╗ ██████╗ ███████╗
+    ██║     ╚██╗██╔╝██╔══██╗      ██╔════╝██╔═══██╗██╔══██╗██╔════╝
+    ██║      ╚███╔╝ ██████╔╝█████╗██║     ██║   ██║██████╔╝█████╗  
+    ██║      ██╔██╗ ██╔══██╗╚════╝██║     ██║   ██║██╔══██╗██╔══╝  
+    ███████╗██╔╝ ██╗██║  ██║      ╚██████╗╚██████╔╝██║  ██║███████╗
+    ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝       ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
+
+    🐺 LXR Core - Art Heist System | SERVER UTILS
+    © 2026 iBoss21 / The Lux Empire | wolves.land
+]]
+
+-- ████████████████████████████████████████████████████████████████████████████████
+-- ████████████████████████ FRAMEWORK AUTO-DETECT █████████████████████████████████
+-- ████████████████████████████████████████████████████████████████████████████████
+
 local Avatars = {}
 
 local Init = {
-    Frameworks  =  { "rsg-core", "vorp_core" },
-    Inventories =  { "vorp_inventory", "rsg-inventory"},
-    SQLScripts  =  { "mysql-async", "ghmattimysql", "oxmysql" },
+    Frameworks  = { "lxr-core", "rsg-core", "vorp_core" },
+    Inventories = { "lxr-inventory", "vorp_inventory", "rsg-inventory" },
+    SQLScripts  = { "mysql-async", "ghmattimysql", "oxmysql" },
 }
 
 initialized = false
@@ -69,7 +85,11 @@ function InitFramework()
 end
 
 function InitFrameworkObject()
-    if Utils.Framework == "rsg-core" then
+    if Utils.Framework == "lxr-core" then
+        local LXRCore = exports["lxr-core"]:GetCoreObject()
+        Wait(100)
+        return LXRCore
+    elseif Utils.Framework == "rsg-core" then
         local RSGCore = exports["rsg-core"]:GetCoreObject()
         Wait(100)
         return RSGCore
@@ -140,7 +160,9 @@ end
 
 ---@param source number The players server id
 function GetPlayer(source)
-    if Utils.Framework == "vorp_core" then
+    if Utils.Framework == "lxr-core" then
+        return Utils.FrameworkObject.Functions.GetPlayer(source)
+    elseif Utils.Framework == "vorp_core" then
         local user = Utils.FrameworkObject.getUser(source) --[[@as User]]  
         if not user then return end -- is player in session?
         local character = user.getUsedCharacter --[[@as Character]]
@@ -170,7 +192,10 @@ end
 
 ---@param source number The players server id
 function GetIdentifier(source)
-    if Utils.Framework == "vorp_core" then
+    if Utils.Framework == "lxr-core" then
+        local player = GetPlayer(source)
+        return player.PlayerData.citizenid
+    elseif Utils.Framework == "vorp_core" then
         local player = GetPlayer(source)
         return player.identifier
     elseif Utils.Framework == "rsg-core" then
@@ -181,7 +206,10 @@ end
 
 ---@param source number The players server id
 function GetPlayerNameBySource(source)
-    if Utils.Framework == "vorp_core" then
+    if Utils.Framework == "lxr-core" then
+        local player = GetPlayer(source)
+        return player.PlayerData.charinfo.firstname .. " " .. player.PlayerData.charinfo.lastname
+    elseif Utils.Framework == "vorp_core" then
         local player = GetPlayer(source)
         return player.firstname .. " "..player.lastname
     elseif Utils.Framework == "rsg-core" then
@@ -200,7 +228,9 @@ end
 ---@param item string The item name
 ---@param handler function The handler function
 function RegisterItem(item, handler)
-    if Utils.Framework == "vorp_core" then
+    if Utils.Framework == "lxr-core" then
+        Utils.FrameworkObject.Functions.CreateUseableItem(item, handler)
+    elseif Utils.Framework == "vorp_core" then
         Utils.FrameworkObject.RegisterUsableItem(item, handler)
     elseif Utils.Framework == "rsg-core" then
         Utils.FrameworkObject.Functions.CreateUseableItem(item, handler)
@@ -306,7 +336,10 @@ function AddItem(source, item, count, slot, metadata)
     end
 end
 
-AddItemData =  {
+AddItemData = {
+    ["lxr-inventory"] = function(source, item, count)
+        exports["lxr-inventory"]:AddItem(source, item, count)
+    end,
     ["vorp_inventory"] = function(source, item, count)
         exports.vorp_inventory:addItem(source, item, count)
     end,
@@ -322,13 +355,16 @@ function CanCarryItem(source,item,count)
 end
 
 CanCarryItemData = {
+    ["lxr-inventory"] = function(source, item, count)
+        return true
+    end,
     ["vorp_inventory"] = function(source, item, count)
         return promise.new(function(resolve, reject)
             TriggerEvent("vorpCore:canCarryItem", tonumber(source), item, count, function(canCarryItem)
                 resolve(canCarryItem)
             end)
         end)
-    end,    
+    end,
     ["rsg-inventory"] = function(source,item,count)
         return true
     end
@@ -346,6 +382,9 @@ function RemoveItem(source, item, count, slot, metadata)
 end
 
 RemoveItemData = {
+    ["lxr-inventory"] = function(source, item, count)
+        exports["lxr-inventory"]:RemoveItem(source, item, count)
+    end,
     ["esx_inventoryhud"] = function(source, item, count)
         local xPlayer = Utils.FrameworkObject.GetPlayerFromId(source)
         xPlayer.removeInventoryItem(item, count)
@@ -414,6 +453,9 @@ GetInventoryData = {
 }
 
 GetItemCountData = {
+    ["lxr-inventory"] = function(source, item)
+        return exports["lxr-inventory"]:GetItemCount(source, item)
+    end,
     ["esx_inventoryhud"] = function(source, item)
         local xPlayer = Utils.FrameworkObject.GetPlayerFromId(source)
         return xPlayer.getInventoryItem(item).count
@@ -455,6 +497,9 @@ function HasItem(source, item, count)
 end
 
 HasItemData = {
+    ["lxr-inventory"] = function(source, item, count)
+        return exports["lxr-inventory"]:GetItemCount(source, item) >= (count or 1)
+    end,
     ["esx_inventoryhud"] = function(source, item, count)
         local xPlayer = Utils.FrameworkObject.GetPlayerFromId(source)
         return xPlayer.getInventoryItem(item).count >= count
@@ -488,6 +533,10 @@ function GetMoney(source, moneyType)
 end
 
 GetMoneyData = {
+    ["lxr-core"] = function(source, moneyType)
+        local player = GetPlayer(source)
+        return player.PlayerData.money[moneyType or "cash"]
+    end,
     ["vorp_core"] = function(source, moneyType)
         local xPlayer = Utils.FrameworkObject.GetPlayerFromId(source)
         return moneyType == "bank" and xPlayer.getAccount("bank").money or xPlayer.getMoney()
@@ -508,6 +557,10 @@ function addBankMoney(source, amount)
 end
 
 AddBankMoneyData = {
+    ["lxr-core"] = function(source, amount)
+        local player = GetPlayer(source)
+        player.Functions.AddMoney("bank", amount)
+    end,
     ["vorp_core"] = function(source, amount)
         local xPlayer = Utils.FrameworkObject.GetPlayerFromId(source)
         xPlayer.addAccountMoney("bank", amount)
@@ -525,6 +578,10 @@ function AddMoney(source, amount)
 end
 
 AddMoneyData = {
+    ["lxr-core"] = function(source, amount)
+        local player = GetPlayer(source)
+        player.Functions.AddMoney("cash", amount)
+    end,
     ["vorp_core"] = function(source, amount)
         local xPlayer = Utils.FrameworkObject.GetPlayerFromId(source)
         xPlayer.addMoney(amount)
@@ -544,6 +601,10 @@ function RemoveMoney(source, amount)
 end
 
 RemoveMoneyData = {
+    ["lxr-core"] = function(source, amount)
+        local player = GetPlayer(source)
+        player.Functions.RemoveMoney("cash", amount)
+    end,
     ["vorp_core"] = function(source, amount)
         local xPlayer = Utils.FrameworkObject.GetPlayerFromId(source)
         xPlayer.removeMoney(amount)
@@ -563,6 +624,10 @@ function HasMoney(source, amount)
 end
 
 HasMoneyData = {
+    ["lxr-core"] = function(source, amount)
+        local player = GetPlayer(source)
+        return player.PlayerData.money["cash"] >= amount
+    end,
     ["vorp_core"] = function(source, amount)
         local xPlayer = Utils.FrameworkObject.GetPlayerFromId(source)
         return xPlayer.getMoney() >= amount
@@ -709,6 +774,30 @@ function getPlayerAvatar(src)
     end
 
     return Avatars[src]
+end
+
+-- ████████████████████████████████████████████████████████████████████████████████
+-- ████████████████████████ ART HEIST HELPERS ██████████████████████████████████████
+-- ████████████████████████████████████████████████████████████████████████████████
+
+---@param source number The players server id
+---@param item string The item name
+---@return boolean Whether the player has the item
+function GetItem(source, item)
+    return HasItem(source, item, 1)
+end
+
+---@param source number The players server id
+---@param message string The notification message
+function NotifyPlayer(source, message)
+    local provider = Config.NotificationProvider or 'ox_lib'
+    if provider == 'ox_lib' then
+        TriggerClientEvent('ox_lib:notify', source, { type = 'inform', description = message })
+    elseif provider == 'vorp' then
+        TriggerClientEvent('vorp:TipRight', source, message, 4000)
+    else
+        print('[lxr-artheist] Notify -> ' .. GetPlayerName(source) .. ': ' .. message)
+    end
 end
 
 Citizen.CreateThread(function()
