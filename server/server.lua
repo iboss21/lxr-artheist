@@ -40,10 +40,47 @@ end)
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Pay player after successful art delivery
 -- ─────────────────────────────────────────────────────────────────────────────
-RegisterNetEvent("artheist:pay", function(price)
+
+-- Compute the maximum possible offer across all delivery locations
+local function GetMaxOfferPrice()
+    local maxPrice = 0
+    for _, loc in pairs(Config.DeliveryLocations) do
+        if loc.offers then
+            for _, offer in pairs(loc.offers) do
+                if offer.maxPrice and offer.maxPrice > maxPrice then
+                    maxPrice = offer.maxPrice
+                end
+            end
+        end
+    end
+    return maxPrice
+end
+
+-- Track recent payouts per player to prevent rapid-fire exploits
+local recentPayouts = {}
+local PAYOUT_COOLDOWN = 5 -- seconds
+
+RegisterNetEvent("artheist:pay", function(price, locationIndex, modelHash, durability)
     local src <const> = source
-    if not price or price <= 0 then return end
+    if not price or type(price) ~= "number" or price <= 0 then return end
+
+    -- Validate price does not exceed the maximum configured offer
+    local maxAllowed = GetMaxOfferPrice()
+    if price > maxAllowed then
+        print(('[lxr-artheist] BLOCKED: Player %d tried to claim $%d (max allowed $%d)'):format(src, price, maxAllowed))
+        return
+    end
+
+    -- Cooldown check
+    local now = os.time()
+    if recentPayouts[src] and (now - recentPayouts[src]) < PAYOUT_COOLDOWN then
+        print(('[lxr-artheist] BLOCKED: Player %d payout too fast (cooldown)'):format(src))
+        return
+    end
+    recentPayouts[src] = now
+
     AddMoney(src, price)
+    SendArtHeistLog(src, price, locationIndex, durability)
 end)
 
 -- ─────────────────────────────────────────────────────────────────────────────

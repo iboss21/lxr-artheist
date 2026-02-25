@@ -177,6 +177,7 @@ Config.PropsLocationOnHands = {
 -- ████████████████████████████████████████████████████████████████████████████████
 
 Config.Debug            = false
+Config.WagonModel       = "wagonCircus01x"
 Config.CutHandsChance   = 0.9
 Config.CutHandsDamage   = 10
 Config.RequiredItem     = "lockpick"
